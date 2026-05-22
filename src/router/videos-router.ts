@@ -1,10 +1,17 @@
 import {Request, Response, Router} from "express";
+
 export const videosRouter = Router();
 const validResolutions = ["P144", "P240", "P360", "P480", "P720", "P1080", "P1440", "P2160"]
-const errorsMessages = []
-function addToErrorsMessages(field) {
-    errorsMessages.push({field, message : `${field} is required`})
+type ErrorMessageType = {
+    field: string,
+    message: string
 }
+const errorsMessages: ErrorMessageType[] = []
+
+function addToErrorsMessages(field: string) {
+    errorsMessages.push({field, message: `${field} is required`})
+}
+
 const videos = [
     {
         "id": 0,
@@ -18,40 +25,46 @@ const videos = [
             validResolutions[0]
         ]
     }
-    ]
+]
 videosRouter.get('/', (req: Request, res: Response) => {
-        res.status(200).send(videos);
+    res.status(200).send(videos);
+});
+videosRouter.delete('/', (req: Request, res: Response) => {
+    videos.splice(0, videos.length)
+    res.sendStatus(204)
 });
 
 videosRouter.post('/', (req: Request, res: Response) => {
-    const newVideo = {id: +(new Date()),
+    const newVideo = {
+        id: +(new Date()),
         "title": req.body.title,
-        "author": req.body.author,  "canBeDownloaded": true,
+        "author": req.body.author, "canBeDownloaded": true,
         "minAgeRestriction": null,
         "createdAt": Date(),
         "publicationDate": Date(),
-        "availableResolutions": req.body.availableResolutions}
+        "availableResolutions": req.body.availableResolutions
+    }
 
-        for(let i= 0; i<req.body.availableResolutions.length ; i++) {
-            if(!validResolutions.includes(req.body.availableResolutions[i])) {
-                addToErrorsMessages('availableResolutions')
-                res.status(404).send(errorsMessages)
-            }
+    for (let i = 0; i < req.body.availableResolutions.length; i++) {
+        if (!validResolutions.includes(req.body.availableResolutions[i])) {
+            addToErrorsMessages('availableResolutions')
+            res.status(404).send(errorsMessages)
         }
-        if(!req.body.title){
-            addToErrorsMessages('title')
-            res.send(errorsMessages)
-        } else if (!req.body.author){
-            addToErrorsMessages('author')
-            res.send(errorsMessages)
-        }
-            res.status(201).send(newVideo);
-            videos.push(newVideo)
-        });
+    }
+    if (!req.body.title) {
+        addToErrorsMessages('title')
+        res.send(errorsMessages)
+    } else if (!req.body.author) {
+        addToErrorsMessages('author')
+        res.send(errorsMessages)
+    }
+    res.status(201).send(newVideo);
+    videos.push(newVideo)
+});
 
 videosRouter.get('/:id', (req: Request, res: Response) => {
     let response = (videos.find(vid => vid.id === +req.params.id));
-    if(!response){
+    if (!response) {
         res.status(404).send('NET TAKOGO VIDEVA')
     } else {
         res.send(response)
@@ -60,53 +73,53 @@ videosRouter.get('/:id', (req: Request, res: Response) => {
 });
 
 videosRouter.put('/:id', (req: Request, res: Response) => {
-    let response = (videos.find(vid => vid.id === +req.params.id));
-    if(!req.body.title){
+    let video = (videos.find(vid => vid.id === +req.params.id));
+    if (!req.body.title) {
         addToErrorsMessages('title')
         res.send(errorsMessages)
-    } else if (!req.body.author){
+    } else if (!req.body.author) {
         addToErrorsMessages('author')
         res.send(errorsMessages)
-    } else if (!req.body.canBeDownloaded){
+    } else if (!req.body.canBeDownloaded) {
         addToErrorsMessages('canBeDownloaded')
         res.send(errorsMessages)
-    } else if (!req.body.minAgeRestriction){
+    } else if (!req.body.minAgeRestriction) {
         addToErrorsMessages('minAgeRestriction')
         res.send(errorsMessages)
-    } else if (!req.body.publicationDate){
+    } else if (!req.body.publicationDate) {
         addToErrorsMessages('publicationDate')
         res.send(errorsMessages)
     }
 
-    for(let i= 0; i<req.body.availableResolutions.length ; i++) {
-        if(!validResolutions.includes(req.body.availableResolutions[i])) {
+    for (let i = 0; i < req.body.availableResolutions.length; i++) {
+        if (!validResolutions.includes(req.body.availableResolutions[i])) {
             addToErrorsMessages('availableResolutions')
             res.status(404).send(errorsMessages)
         }
     }
-    if(response){
-        response.title = req.body.title;
-        response.author = req.body.author;
-        response.availableResolutions = req.body.availableResolutions;
-        response.canBeDownloaded = req.body.canbeDownloaded;
-        response.minAgeRestriction = req.body.minAgeRestriction;
-        response.publicationDate = Date();
+    if (video) {
+        video.title = req.body.title;
+        video.author = req.body.author;
+        video.availableResolutions = req.body.availableResolutions;
+        video.canBeDownloaded = req.body.canbeDownloaded;
+        video.minAgeRestriction = req.body.minAgeRestriction;
+        video.publicationDate = Date();
         res.sendStatus(204)
     }
 
 });
 
 videosRouter.delete('/:id', (req: Request, res: Response) => {
-    let response =
+    let video =
         videos.find(vid => vid.id === +req.params.id)
-    if(response) {
+    if (video) {
         for (let i = 0; i < videos.length; i++) {
             if (videos[i].id === +req.params.id) {
                 videos.splice(i, 1);
                 res.sendStatus(204)
-            } else {
-                res.sendStatus(404)
             }
-    }
+        }
+    } else if (!video) {
+        res.sendStatus(404)
     }
 });
